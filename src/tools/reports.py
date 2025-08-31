@@ -10,6 +10,7 @@ import json
 
 from ..frappe_api import get_client, FrappeApiError
 from ..auth import validate_api_credentials
+from .filter_parser import format_filters_for_api, FILTER_SYNTAX_DOCS
 
 
 def _format_error_response(error: Exception, operation: str) -> str:
@@ -39,23 +40,27 @@ def register_tools(mcp: Any) -> None:
     @mcp.tool()
     async def run_query_report(
         report_name: str,
-        filters: Optional[Dict[str, Any]] = None
+        filters: Optional[str] = None
     ) -> str:
         """
         Execute a Frappe query report with filters.
         
         Args:
             report_name: Name of the report to run
-            filters: Filters to apply to the report (optional)
+            filters: Filter string (optional). Uses custom syntax to bypass MCP validation issues.
+        
+        Filter Syntax: Use the same string-based syntax as count_documents and list_documents.
+        Examples: "status:Open", "date:>=:2025-01-01", "status:in:Open|Working"
         """
         try:
             client = get_client()
             
             # Prepare request data
+            parsed_filters = format_filters_for_api(filters) or {}
             request_data = {
                 "cmd": "frappe.desk.query_report.run",
                 "report_name": report_name,
-                "filters": json.dumps(filters or {}),
+                "filters": json.dumps(parsed_filters),
                 "ignore_prepared_report": 1
             }
             
@@ -162,7 +167,7 @@ def register_tools(mcp: Any) -> None:
     async def run_doctype_report(
         doctype: str,
         fields: Optional[List[str]] = None,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: Optional[str] = None,
         limit: Optional[int] = 100,
         order_by: Optional[str] = None
     ) -> str:
@@ -172,9 +177,12 @@ def register_tools(mcp: Any) -> None:
         Args:
             doctype: DocType to generate report for
             fields: Fields to include in report (optional)
-            filters: Filters to apply (optional)
+            filters: Filter string (optional). Uses custom syntax to bypass MCP validation issues.
             limit: Maximum number of records (default: 100)
             order_by: Field to order by (optional)
+        
+        Filter Syntax: Use the same string-based syntax as count_documents and list_documents.
+        Examples: "status:Open", "date:>=:2025-01-01", "status:in:Open|Working"
         """
         try:
             client = get_client()
@@ -183,8 +191,9 @@ def register_tools(mcp: Any) -> None:
             params = {}
             if fields:
                 params["fields"] = json.dumps(fields)
-            if filters:
-                params["filters"] = json.dumps(filters)
+            parsed_filters = format_filters_for_api(filters)
+            if parsed_filters:
+                params["filters"] = json.dumps(parsed_filters)
             if limit:
                 params["limit"] = str(limit)
             if order_by:
@@ -275,23 +284,27 @@ def register_tools(mcp: Any) -> None:
     @mcp.tool()
     async def get_report_columns(
         report_name: str,
-        filters: Optional[Dict[str, Any]] = None
+        filters: Optional[str] = None
     ) -> str:
         """
         Get the column structure for a specific report.
         
         Args:
             report_name: Name of the report
-            filters: Filters to determine dynamic columns (optional)
+            filters: Filter string (optional). Uses custom syntax to bypass MCP validation issues.
+        
+        Filter Syntax: Use the same string-based syntax as count_documents and list_documents.
+        Examples: "status:Open", "date:>=:2025-01-01", "status:in:Open|Working"
         """
         try:
             client = get_client()
             
             # Get report columns using the report.get_columns method
+            parsed_filters = format_filters_for_api(filters) or {}
             request_data = {
                 "cmd": "frappe.desk.query_report.get_columns",
                 "report_name": report_name,
-                "filters": json.dumps(filters or {})
+                "filters": json.dumps(parsed_filters)
             }
             
             response = await client.post("api/method/frappe.desk.query_report.get_columns", json_data=request_data)
