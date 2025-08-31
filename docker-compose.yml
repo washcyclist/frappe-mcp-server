@@ -1,0 +1,111 @@
+version: '3.8'
+
+services:
+  frappe-mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: frappe-mcp-server
+    environment:
+      # Frappe API configuration (set these in .env file)
+      - FRAPPE_API_KEY=${FRAPPE_API_KEY:-}
+      - FRAPPE_API_SECRET=${FRAPPE_API_SECRET:-}
+      - FRAPPE_BASE_URL=${FRAPPE_BASE_URL:-https://your-frappe-site.com}
+      
+      # Python configuration
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+    
+    # Resource limits (MCP Toolkit requirements)
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    
+    # Security settings
+    security_opt:
+      - no-new-privileges:true
+    read_only: false  # Set to true if no write access needed
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+    
+    # Networking
+    networks:
+      - mcp-network
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "python", "-c", "from src.frappe_mcp_server import __version__; print(__version__)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    
+    # Restart policy
+    restart: unless-stopped
+
+  # Development service
+  frappe-mcp-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: frappe-mcp-dev
+    environment:
+      - FRAPPE_API_KEY=${FRAPPE_API_KEY:-}
+      - FRAPPE_API_SECRET=${FRAPPE_API_SECRET:-}
+      - FRAPPE_BASE_URL=${FRAPPE_BASE_URL:-https://your-frappe-site.com}
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+    
+    # Mount source code for development
+    volumes:
+      - ./src:/app/src:ro
+      - ./tests:/app/tests:ro
+      - ./pyproject.toml:/app/pyproject.toml:ro
+      - dev-cache:/root/.cache
+    
+    # Development ports
+    ports:
+      - "8000:8000"  # HTTP mode for development
+    
+    # Development resource limits (more generous)
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+    
+    # Development networking
+    networks:
+      - mcp-network
+    
+    # Override default command for development
+    command: ["python", "-m", "src.frappe_mcp_server.main"]
+    
+    # Don't restart automatically in development
+    restart: "no"
+    
+    profiles:
+      - development
+
+networks:
+  mcp-network:
+    driver: bridge
+    name: mcp-network
+
+volumes:
+  dev-cache:
+    name: frappe-mcp-dev-cache

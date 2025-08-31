@@ -1,0 +1,52 @@
+[project]
+name = "frappe-mcp-server"
+version = "0.1.0"
+description = "Enhanced Model Context Protocol server for Frappe Framework with comprehensive API operations"
+readme = "README.md"
+authors = [
+    { name = "Geordie Everitt", email = "geveritt@appliedrelevance.com" }
+]
+license = { text = "ISC" }
+keywords = ["frappe", "mcp", "ai", "claude", "anthropic", "erp"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: ISC License (ISCL)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastmcp>=2.11.3",
+    "httpx>=0.28.1",
+    "mcp[cli]",
+    "pydantic>=2.11.7",
+    "python-dotenv>=1.1.1",
+    "zod>=0.8.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/appliedrelevance/frappe_mcp_server_uv"
+Repository = "https://github.com/appliedrelevance/frappe_mcp_server_uv.git"
+Issues = "https://github.com/appliedrelevance/frappe_mcp_server_uv/issues"
+
+[project.scripts]
+frappe-mcp-server = "src:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "isort>=6.0.1",
+    "mcp>=1.13.1",
+    "mypy>=1.17.1",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
+]
