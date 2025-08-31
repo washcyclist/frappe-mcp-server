@@ -1,10 +1,10 @@
 [project]
 name = "frappe-mcp-server"
-version = "0.1.0"
+version = "0.2.0"
 description = "Enhanced Model Context Protocol server for Frappe Framework with comprehensive API operations"
 readme = "README.md"
 authors = [
-    { name = "Geordie Everitt", email = "geveritt@appliedrelevance.com" }
+    { name = "Applied Relevance", email = "geveritt@appliedrelevance.com" }
 ]
 license = { text = "ISC" }
 keywords = ["frappe", "mcp", "ai", "claude", "anthropic", "erp"]
@@ -32,7 +32,7 @@ Repository = "https://github.com/appliedrelevance/frappe_mcp_server_uv.git"
 Issues = "https://github.com/appliedrelevance/frappe_mcp_server_uv/issues"
 
 [project.scripts]
-frappe-mcp-server = "src:main"
+frappe-mcp-server = "src.main:main"
 
 [build-system]
 requires = ["hatchling"]

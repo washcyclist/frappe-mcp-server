@@ -40,8 +40,8 @@ def create_server() -> FastMCP:
     return mcp
 
 
-def start_server(server: FastMCP) -> None:
-    """Start the MCP server with proper signal handling."""
+def start_server(server: FastMCP, transport: str = "stdio", host: str = "127.0.0.1", port: int = 8000) -> None:
+    """Start the MCP server with proper signal handling and transport selection."""
     
     def signal_handler(sig: int, frame: Any) -> None:
         """Handle shutdown signals gracefully."""
@@ -53,8 +53,16 @@ def start_server(server: FastMCP) -> None:
     signal.signal(signal.SIGTERM, signal_handler)
     
     try:
-        print("Frappe MCP server running on stdio", file=sys.stderr)
-        server.run()
+        if transport == "sse":
+            print(f"Frappe MCP server running on SSE transport at http://{host}:{port}", file=sys.stderr)
+            server.run(transport="sse", host=host, port=port)
+        elif transport == "stdio":
+            print("Frappe MCP server running on stdio transport", file=sys.stderr)
+            server.run()
+        else:
+            print(f"Unsupported transport: {transport}", file=sys.stderr)
+            print("Supported transports: stdio, sse", file=sys.stderr)
+            sys.exit(1)
     except Exception as error:
         print(f"Fatal error: {error}", file=sys.stderr)
         sys.exit(1)

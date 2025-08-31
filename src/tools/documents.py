@@ -172,8 +172,8 @@ def register_tools(mcp: Any) -> None:
     async def list_documents(
         doctype: str,
         filters: Optional[str] = None,
-        fields: Optional[List[str]] = None,
-        limit: Optional[int] = None,
+        fields: Optional[str] = None,
+        limit: Optional[str] = None,
         order_by: Optional[str] = None
     ) -> str:
         """
@@ -182,8 +182,8 @@ def register_tools(mcp: Any) -> None:
         Args:
             doctype: DocType name
             filters: Filter string (optional). Uses custom syntax to bypass MCP validation issues.
-            fields: List of fields to return (optional)
-            limit: Maximum number of records to return (optional)
+            fields: Comma-separated field names (optional). E.g. "name,customer,total"
+            limit: Maximum number of records to return (optional). E.g. "20"
             order_by: Field to order by (optional, can include 'desc' like 'creation desc')
         
         Filter Syntax:
@@ -201,7 +201,7 @@ def register_tools(mcp: Any) -> None:
 
         Examples:
             - list_documents("Bank Transaction", "status:Unreconciled") -> List unreconciled transactions
-            - list_documents("Task", "status:in:Open|Working", ["name", "subject"], 10) -> List open tasks with specific fields
+            - list_documents("Task", "status:in:Open|Working", "name,subject", "10") -> List open tasks with specific fields
             - list_documents("User", "name:like:%admin%") -> List users with 'admin' in name
         """
         try:
@@ -213,9 +213,12 @@ def register_tools(mcp: Any) -> None:
             if parsed_filters:
                 params["filters"] = json.dumps(parsed_filters)
             if fields:
-                params["fields"] = json.dumps(fields)
+                # Convert comma-separated string to list
+                field_list = [f.strip() for f in fields.split(',')]
+                params["fields"] = json.dumps(field_list)
             if limit:
-                params["limit"] = str(limit)
+                # Convert string to integer for API
+                params["limit"] = limit
             if order_by:
                 params["order_by"] = order_by
             

@@ -5,8 +5,8 @@ A comprehensive Model Context Protocol server for Frappe Framework
 with document operations, schema introspection, and helper tools.
 """
 
-__version__ = "0.1.0"
-__author__ = "MCP Frappe Team"
+__version__ = "0.2.0"
+__author__ = "Applied Relevance"
 
 
 def main() -> None:
