@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "frappe-mcp-server": {
+      "type": "sse",
+      "url": "http://127.0.0.1:8000/sse"
+    },
+    "context7": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["context7-mcp"]
+    }
+  }
+}

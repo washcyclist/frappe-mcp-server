@@ -89,7 +89,7 @@ def run_server() -> None:
     # Import server after version check to avoid loading overhead
     from .server import create_server, start_server
     
-    server = create_server()
+    server = create_server(host=args.host, port=args.port)
     start_server(server, transport=args.transport, host=args.host, port=args.port)
 
 

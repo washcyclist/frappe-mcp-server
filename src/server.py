@@ -8,19 +8,23 @@ import signal
 import sys
 from typing import Any
 
-from fastmcp import FastMCP
+from mcp.server.fastmcp import FastMCP
 
 from . import __version__
 from .auth import validate_api_credentials
 from .tools import helpers, documents, schema, reports
 
 
-# Global server instance
-mcp = FastMCP("frappe-mcp-server")
+# Global server instance - will be initialized in create_server()
+mcp = None
 
 
-def create_server() -> FastMCP:
+def create_server(host: str = "127.0.0.1", port: int = 8000) -> FastMCP:
     """Create and configure the MCP server instance."""
+    global mcp
+    
+    # Initialize server with host/port
+    mcp = FastMCP("frappe-mcp-server", host=host, port=port)
     
     # Validate API credentials at startup
     credentials_check = validate_api_credentials()
@@ -54,8 +58,8 @@ def start_server(server: FastMCP, transport: str = "stdio", host: str = "127.0.0
     
     try:
         if transport == "sse":
-            print(f"Frappe MCP server running on SSE transport at http://{host}:{port}", file=sys.stderr)
-            server.run(transport="sse", host=host, port=port)
+            print(f"Frappe MCP server running on SSE transport at {host}:{port}", file=sys.stderr)
+            server.run(transport="sse")
         elif transport == "stdio":
             print("Frappe MCP server running on stdio transport", file=sys.stderr)
             server.run()
