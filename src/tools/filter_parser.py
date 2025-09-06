@@ -21,8 +21,9 @@ def parse_filter_string(filter_str: str) -> Dict[str, Any]:
     - "status:in:Open|Closed" -> {"status": ["in", ["Open", "Closed"]]}
     - "date:between:2025-01-01|2025-12-31" -> {"date": ["between", ["2025-01-01", "2025-12-31"]]}
     - "field:is:null" -> {"field": ["is", "not set"]}
+    - "date:>=:2024-01-01,date:<=:2024-01-31" -> {"date": [[">=", "2024-01-01"], ["<=", "2024-01-31"]]}
     """
-    filters_dict = {}
+    filters_dict: Dict[str, Any] = {}
     
     # Handle multiple filters separated by commas
     filter_parts = filter_str.split(',')
@@ -37,6 +38,9 @@ def parse_filter_string(filter_str: str) -> Dict[str, Any]:
                 # Format: field:operator:value(s)
                 field, operator, value_str = components[0].strip(), components[1].strip(), components[2]
                 
+                # Create the filter condition
+                filter_condition = None
+                
                 # Handle special operators
                 if operator.lower() in ['in', 'not_in']:
                     # Handle list values separated by |
@@ -45,38 +49,58 @@ def parse_filter_string(filter_str: str) -> Dict[str, Any]:
                     converted_values = []
                     for v in values:
                         converted_values.append(_convert_value(v))
-                    filters_dict[field] = [operator.replace('_', ' '), converted_values]
+                    filter_condition = [operator.replace('_', ' '), converted_values]
                     
                 elif operator.lower() == 'between':
                     # Handle range values separated by |
                     range_values = [v.strip() for v in value_str.split('|')]
                     if len(range_values) == 2:
                         converted_range = [_convert_value(v) for v in range_values]
-                        filters_dict[field] = [operator, converted_range]
+                        filter_condition = [operator, converted_range]
                     else:
                         raise ValueError(f"Between operator requires exactly 2 values separated by |, got: {value_str}")
                         
                 elif operator.lower() in ['is', 'is_not']:
                     # Handle null checks: is:null, is:not_null, is_not:null, etc.
                     if value_str.lower() in ['null', 'none', 'empty']:
-                        filters_dict[field] = [operator.replace('_', ' '), "not set"]
+                        filter_condition = [operator.replace('_', ' '), "not set"]
                     elif value_str.lower() in ['not_null', 'not_none', 'not_empty']:
-                        filters_dict[field] = [operator.replace('_', ' '), "set"]
+                        filter_condition = [operator.replace('_', ' '), "set"]
                     else:
-                        filters_dict[field] = [operator.replace('_', ' '), _convert_value(value_str)]
+                        filter_condition = [operator.replace('_', ' '), _convert_value(value_str)]
                         
                 elif operator.lower() == 'not_like':
                     # Handle not like operator  
-                    filters_dict[field] = ["not like", value_str]
+                    filter_condition = ["not like", value_str]
                     
                 else:
                     # Standard operators: =, !=, <, >, <=, >=, like
-                    filters_dict[field] = [operator, _convert_value(value_str)]
+                    filter_condition = [operator, _convert_value(value_str)]
+                
+                # Handle multiple filters for the same field
+                if field in filters_dict:
+                    # Convert existing single filter to list format
+                    if not isinstance(filters_dict[field], list) or len(filters_dict[field]) != 2 or not isinstance(filters_dict[field][0], list):
+                        filters_dict[field] = [filters_dict[field]]
+                    # Add new filter condition
+                    filters_dict[field].append(filter_condition)
+                else:
+                    filters_dict[field] = filter_condition
                     
             elif len(components) == 2:
                 # Simple field:value format (implies equality)
                 field, value_str = components[0].strip(), components[1]
-                filters_dict[field] = _convert_value(value_str)
+                filter_condition = _convert_value(value_str)
+                
+                # Handle multiple filters for the same field
+                if field in filters_dict:
+                    # Convert existing single filter to list format
+                    if not isinstance(filters_dict[field], list) or len(filters_dict[field]) != 2 or not isinstance(filters_dict[field][0], list):
+                        filters_dict[field] = [filters_dict[field]]
+                    # Add new filter condition
+                    filters_dict[field].append(filter_condition)
+                else:
+                    filters_dict[field] = filter_condition
                 
     return filters_dict
 
