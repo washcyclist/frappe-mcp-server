@@ -58,7 +58,8 @@ class FrappeApiClient:
                 timeout=httpx.Timeout(30.0),
                 headers={
                     "Accept": "application/json",
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Expect": ""  # Disable Expect: 100-continue header to avoid HTTP 417 errors
                 }
             )
         
