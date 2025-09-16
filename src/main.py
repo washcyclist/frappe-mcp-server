@@ -11,8 +11,8 @@ import argparse
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load .env file
-load_dotenv()
+# Load .env file if it exists (optional for development)
+load_dotenv(override=False)
 
 # Add current package to path for relative imports
 current_dir = Path(__file__).parent
@@ -33,13 +33,14 @@ def parse_args() -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Transport Examples:
-  frappe-mcp-server                    # stdio transport (default)
-  frappe-mcp-server --transport sse    # SSE transport on localhost:8000
-  frappe-mcp-server -t sse -p 9000     # SSE transport on port 9000
+  frappe-mcp-server                     # stdio transport (default)
+  frappe-mcp-server --transport http    # HTTP transport on localhost:8069/mcp
+  frappe-mcp-server -t http -p 9000     # HTTP transport on port 9000
+  frappe-mcp-server -t http --path /api # HTTP transport with custom path
 
 Environment Variables:
   FRAPPE_API_KEY      - Frappe API key for authentication
-  FRAPPE_API_SECRET   - Frappe API secret for authentication  
+  FRAPPE_API_SECRET   - Frappe API secret for authentication
   FRAPPE_BASE_URL     - Base URL of Frappe site (e.g., https://site.frappe.cloud)
         """
     )
@@ -52,7 +53,7 @@ Environment Variables:
     
     parser.add_argument(
         "--transport", "-t",
-        choices=["stdio", "sse"],
+        choices=["stdio", "http"],
         default="stdio",
         help="Transport protocol (default: stdio)"
     )
@@ -60,16 +61,22 @@ Environment Variables:
     parser.add_argument(
         "--host",
         default="127.0.0.1",
-        help="Host for SSE transport (default: 127.0.0.1)"
+        help="Host for HTTP transport (default: 127.0.0.1)"
     )
     
     parser.add_argument(
         "--port", "-p",
         type=int,
-        default=8000,
-        help="Port for SSE transport (default: 8000)"
+        default=8069,
+        help="Port for HTTP transport (default: 8069)"
     )
-    
+
+    parser.add_argument(
+        "--path",
+        default="/mcp",
+        help="Path for HTTP transport endpoint (default: /mcp)"
+    )
+
     return parser.parse_args()
 
 
@@ -90,7 +97,7 @@ def run_server() -> None:
     from .server import create_server, start_server
     
     server = create_server(host=args.host, port=args.port)
-    start_server(server, transport=args.transport, host=args.host, port=args.port)
+    start_server(server, transport=args.transport, host=args.host, port=args.port, path=args.path)
 
 
 def main() -> None:

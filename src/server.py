@@ -19,7 +19,7 @@ from .tools import helpers, documents, schema, reports
 mcp = None
 
 
-def create_server(host: str = "127.0.0.1", port: int = 8000) -> FastMCP:
+def create_server(host: str = "127.0.0.1", port: int = 8069) -> FastMCP:
     """Create and configure the MCP server instance."""
     global mcp
     
@@ -44,7 +44,7 @@ def create_server(host: str = "127.0.0.1", port: int = 8000) -> FastMCP:
     return mcp
 
 
-def start_server(server: FastMCP, transport: str = "stdio", host: str = "127.0.0.1", port: int = 8000) -> None:
+def start_server(server: FastMCP, transport: str = "stdio", host: str = "127.0.0.1", port: int = 8069, path: str = "/mcp") -> None:
     """Start the MCP server with proper signal handling and transport selection."""
     
     def signal_handler(sig: int, frame: Any) -> None:
@@ -57,15 +57,15 @@ def start_server(server: FastMCP, transport: str = "stdio", host: str = "127.0.0
     signal.signal(signal.SIGTERM, signal_handler)
     
     try:
-        if transport == "sse":
-            print(f"Frappe MCP server running on SSE transport at {host}:{port}", file=sys.stderr)
-            server.run(transport="sse")
+        if transport == "http":
+            print(f"Frappe MCP server running on HTTP transport at {host}:{port}{path}", file=sys.stderr)
+            server.run(transport="streamable-http", mount_path=path)
         elif transport == "stdio":
             print("Frappe MCP server running on stdio transport", file=sys.stderr)
             server.run()
         else:
             print(f"Unsupported transport: {transport}", file=sys.stderr)
-            print("Supported transports: stdio, sse", file=sys.stderr)
+            print("Supported transports: stdio, http", file=sys.stderr)
             sys.exit(1)
     except Exception as error:
         print(f"Fatal error: {error}", file=sys.stderr)
