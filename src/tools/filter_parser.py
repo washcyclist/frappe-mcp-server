@@ -102,7 +102,62 @@ def parse_filter_string(filter_str: str) -> Dict[str, Any]:
                 else:
                     filters_dict[field] = filter_condition
                 
+    # Post-process: Convert >= and <= on same field to between operator
+    filters_dict = _optimize_range_filters(filters_dict)
+    
     return filters_dict
+
+
+def _optimize_range_filters(filters_dict: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Optimize range filters by converting >= and <= conditions on the same field to between operator.
+    
+    This fixes the issue where Frappe API can't handle nested arrays like:
+    {"date": [[">=", "2024-01-01"], ["<=", "2024-01-31"]]}
+    
+    Instead converts to:
+    {"date": ["between", ["2024-01-01", "2024-01-31"]]}
+    """
+    optimized = {}
+    
+    for field, conditions in filters_dict.items():
+        # Check if we have multiple conditions on the same field
+        if isinstance(conditions, list) and len(conditions) >= 2:
+            # Look for >= and <= patterns that can be converted to between
+            gte_value = None
+            lte_value = None
+            other_conditions = []
+            
+            for condition in conditions:
+                if isinstance(condition, list) and len(condition) == 2:
+                    operator, value = condition
+                    if operator == ">=":
+                        gte_value = value
+                    elif operator == "<=":
+                        lte_value = value
+                    else:
+                        other_conditions.append(condition)
+                else:
+                    other_conditions.append(condition)
+            
+            # If we found both >= and <= conditions, convert to between
+            if gte_value is not None and lte_value is not None:
+                between_condition = ["between", [gte_value, lte_value]]
+                
+                if other_conditions:
+                    # If there are other conditions, keep them along with between
+                    optimized[field] = [between_condition] + other_conditions
+                else:
+                    # Just the between condition
+                    optimized[field] = between_condition
+            else:
+                # Keep original conditions if we can't optimize
+                optimized[field] = conditions
+        else:
+            # Single condition, keep as-is
+            optimized[field] = conditions
+    
+    return optimized
 
 
 def _convert_value(value_str: str):
