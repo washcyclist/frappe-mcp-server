@@ -6,7 +6,44 @@ The Frappe MCP server is properly configured in the project's `.mcp.json` file b
 
 ## Current Configuration
 
-### Project MCP Configuration (`.mcp.json`)
+### User-Level MCP Configuration (`~/.config/claude-code/mcp_servers.json`)
+**CURRENT (Updated for SSE daemon connection):**
+```json
+{
+  "frappe-mcp-server": {
+    "url": "http://localhost:8069/sse",
+    "env": {
+      "FRAPPE_API_KEY": "ff09790d111aeab",
+      "FRAPPE_API_SECRET": "226fc3b57acb830",
+      "FRAPPE_BASE_URL": "https://epinomy.com",
+      "PYTHONUNBUFFERED": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "LOG_LEVEL": "INFO"
+    }
+  }
+}
+```
+
+**PREVIOUS (stdio transport - launches new instances):**
+```json
+{
+  "frappe-mcp-server": {
+    "command": "uv",
+    "args": ["run", "python", "-m", "src.main"],
+    "cwd": "/Volumes/Berthold/Code/tools/mcp/frappe_mcp_server_uv",
+    "env": {
+      "FRAPPE_API_KEY": "ff09790d111aeab",
+      "FRAPPE_API_SECRET": "226fc3b57acb830",
+      "FRAPPE_BASE_URL": "https://epinomy.com",
+      "PYTHONUNBUFFERED": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "LOG_LEVEL": "INFO"
+    }
+  }
+}
+```
+
+### Previous Project MCP Configuration (`.mcp.json`) - DEPRECATED
 ```json
 {
   "mcpServers": {
@@ -43,8 +80,12 @@ According to `claude mcp` output:
 - [x] Verified JSON syntax is valid
 - [x] Confirmed server runs successfully on http://127.0.0.1:8000/sse
 - [x] Used `claude mcp` command to create initial configuration
+- [x] **NEW**: Configured Claude Code user-level MCP configuration
+- [x] **NEW**: Moved from SSE transport to stdio transport with uv
+- [x] **NEW**: Renamed .env to .env.gde to test credential handling
+- [x] **NEW**: Created `~/.config/claude-code/mcp_servers.json` with embedded credentials
+- [x] **NEW**: Configured server as macOS system service for persistent operation
 - [ ] Checked Claude Code logs for MCP discovery errors
-- [ ] Tested with stdio transport instead of SSE
 - [ ] Verified environment variables are accessible to Claude
 
 ## Potential Root Causes
@@ -55,13 +96,37 @@ According to `claude mcp` output:
 4. **Permission Issues**: Claude might lack permissions to access local HTTP servers
 5. **Configuration Parsing**: Bug in Claude's `.mcp.json` parser for project-scoped configs
 
+## Current Status (Latest Debugging Session)
+
+**Daemon Discovery**: Identified that a Frappe MCP server is already running as macOS daemon on localhost:8069/sse
+- Confirmed SSE server responds properly with `curl -v http://localhost:8069/sse`
+- Server returns proper SSE headers: `content-type: text/event-stream`
+
+**Configuration Update**: Modified MCP configuration to connect to existing daemon instead of launching new instances
+- **OLD**: Used `command` + `args` to launch stdio transport via uv
+- **NEW**: Using `url: "http://localhost:8069/sse"` to connect to running daemon
+- **IMPORTANT**: Kept environment variables in config since daemon won't have credentials
+
+**Transport Migration**: Successfully migrated from stdio transport back to SSE transport, but connecting to existing daemon rather than launching new server.
+
+**Credential Management**: 
+- Renamed `.env` to `.env.gde` to test server behavior without local env file
+- Server starts successfully without .env file (version 0.2.0 confirmed)
+- Credentials now passed through MCP protocol via `env` section in client config
+
+**Service Configuration**:
+- Server configured as macOS system service for persistent operation
+- Service restart requires manual intervention: `sudo launchctl stop/start com.frappe.mcp.server`
+
 ## Next Investigation Steps
 
-1. Check if stdio transport works instead of SSE
-2. Try different URL formats (localhost vs 127.0.0.1)
-3. Add logging to server startup to see if Claude attempts connection
-4. Test with a minimal MCP server to isolate the issue
-5. Compare working playwright config vs frappe-mcp-server config
+1. ✅ ~~Check if stdio transport works instead of SSE~~ - **COMPLETED**: Configured stdio transport via uv
+2. ✅ ~~Try different URL formats (localhost vs 127.0.0.1)~~ - **COMPLETED**: Identified daemon on localhost:8069
+3. ✅ ~~Identify if daemon server is already running~~ - **COMPLETED**: Found SSE server on port 8069
+4. ✅ ~~Update configuration to connect to daemon instead of launching new instance~~ - **COMPLETED**: Updated to use `url` field
+5. **CURRENT**: Test if Claude Code recognizes the SSE daemon connection after restart
+6. **PENDING**: Verify credential passing through MCP protocol to daemon
+7. **PENDING**: Add logging to server to confirm Claude connection attempts
 
 ## Workaround
 
