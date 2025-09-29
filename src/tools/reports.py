@@ -223,40 +223,38 @@ def register_tools(mcp: Any) -> None:
     async def get_financial_statements(
         report_type: str,
         company: str,
-        from_date: Optional[str] = None,
-        to_date: Optional[str] = None,
+        from_date: str,
+        to_date: str,
         periodicity: Optional[str] = "Yearly"
     ) -> str:
         """
         Get standard financial reports (P&L, Balance Sheet, Cash Flow).
-        
+
         Args:
-            report_type: Type of financial statement 
+            report_type: Type of financial statement
                        ('Profit and Loss Statement', 'Balance Sheet', 'Cash Flow')
             company: Company name
-            from_date: Start date (YYYY-MM-DD format, optional)
-            to_date: End date (YYYY-MM-DD format, optional) 
+            from_date: Start date (YYYY-MM-DD format, required)
+            to_date: End date (YYYY-MM-DD format, required)
             periodicity: Periodicity (Monthly, Quarterly, Half-Yearly, Yearly)
         """
         try:
             client = get_client()
-            
-            # Build filters for financial report
+
+            # Build filters for financial report using correct ERPNext parameter names
             filters = {
                 "company": company,
-                "periodicity": periodicity
+                "periodicity": periodicity,
+                "period_start_date": from_date,
+                "period_end_date": to_date,
+                "filter_based_on": "Date Range",
+                "accumulated_values": 1
             }
-            
-            if from_date:
-                filters["from_date"] = from_date
-            if to_date:
-                filters["to_date"] = to_date
-            
+
             # Prepare request data
             request_data = {
-                "cmd": "frappe.desk.query_report.run",
                 "report_name": report_type,
-                "filters": json.dumps(filters),
+                "filters": filters,
                 "ignore_prepared_report": 1
             }
             

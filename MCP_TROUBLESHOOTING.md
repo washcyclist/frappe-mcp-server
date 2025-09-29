@@ -13,9 +13,9 @@ The Frappe MCP server is properly configured in the project's `.mcp.json` file b
   "frappe-mcp-server": {
     "url": "http://localhost:8069/sse",
     "env": {
-      "FRAPPE_API_KEY": "ff09790d111aeab",
-      "FRAPPE_API_SECRET": "226fc3b57acb830",
-      "FRAPPE_BASE_URL": "https://epinomy.com",
+      "FRAPPE_API_KEY": "xyz",
+      "FRAPPE_API_SECRET": "123",
+      "FRAPPE_BASE_URL": "https://frappe.com",
       "PYTHONUNBUFFERED": "1",
       "PYTHONDONTWRITEBYTECODE": "1",
       "LOG_LEVEL": "INFO"
@@ -32,8 +32,8 @@ The Frappe MCP server is properly configured in the project's `.mcp.json` file b
     "args": ["run", "python", "-m", "src.main"],
     "cwd": "/Volumes/Berthold/Code/tools/mcp/frappe_mcp_server_uv",
     "env": {
-      "FRAPPE_API_KEY": "ff09790d111aeab",
-      "FRAPPE_API_SECRET": "226fc3b57acb830",
+      "FRAPPE_API_KEY": "xyz",
+      "FRAPPE_API_SECRET": "123",
       "FRAPPE_BASE_URL": "https://epinomy.com",
       "PYTHONUNBUFFERED": "1",
       "PYTHONDONTWRITEBYTECODE": "1",
