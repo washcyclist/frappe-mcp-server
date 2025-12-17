@@ -12,7 +12,7 @@ from mcp.server.fastmcp import FastMCP
 
 from . import __version__
 from .auth import validate_api_credentials
-from .tools import helpers, documents, schema, reports
+from .tools import helpers, documents, schema, reports, bank_clearance
 
 
 # Global server instance - will be initialized in create_server()
@@ -40,6 +40,7 @@ def create_server(host: str = "127.0.0.1", port: int = 8069) -> FastMCP:
     documents.register_tools(mcp)
     schema.register_tools(mcp)
     reports.register_tools(mcp)
+    bank_clearance.register_tools(mcp)
     
     return mcp
 
